@@ -1,1 +1,2 @@
 # FMIZoo.jl
+This is a collection of testing and example FMUs ([fmi-standard.org](http://fmi-standard.org/)) for the Julia libraries [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl). 
