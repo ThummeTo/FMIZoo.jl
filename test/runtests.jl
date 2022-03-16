@@ -6,5 +6,7 @@
 using Test
 using FMIZoo
 
-list_models()
-get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
+@testset "FMIZoo.jl" begin
+    list_models()
+    @test get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x") == "C:\\Users\\thummeto\\Documents\\FMIZoo.jl\\models\\bin\\Dymola\\2022x\\SpringDamperPendulum1D.fmu"
+end
