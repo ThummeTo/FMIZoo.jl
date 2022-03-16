@@ -5,6 +5,7 @@
 FMIZoo.jl is a collection of testing and example FMUs ([fmi-standard.org](http://fmi-standard.org/)) for the Julia libraries [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl). 
 
 [![CI Testing](https://github.com/ThummeTo/FMIZoo.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIZoo.jl/actions)
+[![Coverage](https://codecov.io/gh/ThummeTo/FMIZoo.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIZoo.jl)
 
 ## How can I use FMIZoo.jl?
 1. open a Julia-Command-Window, activate your preferred environment
