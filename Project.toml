@@ -1,7 +1,7 @@
 name = "FMIZoo"
 uuid = "724179cf-c260-40a9-bd27-cccc6fe2f195"
 authors = ["FB <frederic.bruder@uni-a.de>", "TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 FilePaths = "8fc22ac5-c921-52a6-82fd-178b2807b824"
