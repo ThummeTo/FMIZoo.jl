@@ -26,13 +26,14 @@ function __init__()
 
         import .FMIImport
         FMIImport.fmi2Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...) = fmi2Load(name, tool, version; kwargs...)
+        FMIImport.fmi3Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...) = fmi3Load(name, tool, version; kwargs...)
     end
 
     @require FMI="14a09403-18e3-468f-ad8a-74f8dda2d9ac" begin 
         include(joinpath(@__DIR__, "addon.jl"))
 
         import .FMI
-        FMI.fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...) = fmiLoad(name, tool, version; kwargs...)
+        FMI.fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = fmiLoad(name, tool, version, fmiversion; kwargs...)
     end
 end
 
