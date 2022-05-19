@@ -10,14 +10,17 @@ using Glob, Requires
 dir = @__DIR__
 p_model_src = joinpath(dir |> dirname, "models", "src")
 p_model_bin = joinpath(dir |> dirname, "models", "bin")
+p_mos_scripts = joinpath(dir |> dirname, "mos_scripts")
 
-g = glob("*.mo", p_model_src)
+absModelPaths = glob("*.mo", p_model_src)
 
-modelNames = map(g) do x
+modelNames = map(absModelPaths) do x
     return splitpath(x)[end][1:end-3]
 end
 
-export list_models, get_model_filename
+include(joinpath(@__DIR__, "mosGenerators.jl"))
+
+export list_models, get_model_filename, generate_mos_scripts, collect_fmus
 include(joinpath(@__DIR__, "util.jl"))
 
 function __init__()
