@@ -13,6 +13,9 @@ Shows which models are available. Prints both their IDs and their names.
 """
 function list_models()
     @info "Models available in package \"$(@__MODULE__)\""
+    header = "ID: model name"
+    println("\t$(header)")
+    println("\t$("-"^length(header))")
     for i in 1:length(modelNames)
         println("\t$i: $(modelNames[i])")
     end
@@ -114,9 +117,6 @@ function download_reference_FMU(modelName::AbstractString, version::AbstractStri
 
     return pathToFmu
 end
-
-
-
 
 
 """
