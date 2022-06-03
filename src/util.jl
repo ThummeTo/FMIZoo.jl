@@ -137,7 +137,7 @@ function collect_fmus(p_dst::Union{AbstractString, Nothing}=nothing)
     
     fmuPaths = glob("*.fmu", FMIZoo.p_model_src)
 
-    @assert length(fmuPaths) > 0 "Could not find any FMUs in $(p_model_src). Did you run `FMIZoo.generate_mos_scripts` and have it executed by your Modelica tool?"
+    @assert length(fmuPaths) > 0 "Could not find any FMUs in $(p_model_src). Did you run `FMIZoo.generate_mos_scripts` and have a fitting script executed by your Modelica tool?"
 
     for fmup in fmuPaths
         fn = splitpath(fmup)[end]
