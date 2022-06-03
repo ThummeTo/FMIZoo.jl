@@ -70,6 +70,25 @@ function get_model_filename(modelName::AbstractString, tool::AbstractString, ver
 end
 
 
+function get_model_filename(modelID::Integer, tool::AbstractString, version::AbstractString)
+    if modelID < 1
+        error("Pass a modelID >= 1.")
+    end
+
+    if modelID > length(modelNames)
+        error("There are only $(length(modelNames)) models to choose from. Pass modelID between 1 and $(length(modelNames)). Do `list_models()` to list your options.")
+    end
+    
+    return get_model_filename(modelNames[modelID], tool, version)
+end
+
+
+# TODO prevent this function from downloading on EVERY call. replace `print` by a more appropriate logging function or even an assertion? what happens if the requested model is not found? any information for the user?
+"""
+    download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
+
+Returns the path to an FMU from https://github.com/modelica/Reference-FMUs. If neccessary, all available FMUs are downloaded and saved to a temporary directory at first.
+"""
 function download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
 
     zipPath = Downloads.download("https://github.com/modelica/Reference-FMUs/releases/download/v$(version)/Reference-FMUs-$(version).zip")
@@ -97,17 +116,7 @@ function download_reference_FMU(modelName::AbstractString, version::AbstractStri
 end
 
 
-function get_model_filename(modelID::Integer, tool::AbstractString, version::AbstractString)
-    if modelID < 1
-        error("Pass a modelID >= 1.")
-    end
 
-    if modelID > length(modelNames)
-        error("There are only $(length(modelNames)) models to choose from. Pass modelID between 1 and $(length(modelNames)). Do `list_models()` to list your options.")
-    end
-    
-    return get_model_filename(modelNames[modelID], tool, version)
-end
 
 
 """
