@@ -123,12 +123,12 @@ end
     generate_mos_scripts()
 Generate .mos scripts in `$(p_mos_scripts)` to automate the tool-dependent creation of FMUs.
 """
-function generate_mos_scripts()
+function generate_mos_scripts(; verbose=true)
     for (name, func) in mosGenerators.generators
         open(io -> write(io, func()), joinpath(p_mos_scripts, "$(name).mos"), "w")
     end
 
-    @info "Generated all mos scripts in $(p_mos_scripts).\nYou can now copy a path to one of those scripts depending on your Modelica tool and have it executed there to generate all model FMUs into $(p_model_src).\nWhen that's done, call `collect_fmus`."
+    verbose && @info "Generated all mos scripts in $(p_mos_scripts).\nYou can now copy a path to one of those scripts depending on your Modelica tool and have it executed there to generate all model FMUs into $(p_model_src).\nWhen that's done, call `collect_fmus`."
 end
 
 
