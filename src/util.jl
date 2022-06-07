@@ -13,6 +13,9 @@ Shows which models are available. Prints both their IDs and their names.
 """
 function list_models()
     @info "Models available in package \"$(@__MODULE__)\""
+    header = "ID: model name"
+    println("\t$(header)")
+    println("\t$("-"^length(header))")
     for i in 1:length(modelNames)
         println("\t$i: $(modelNames[i])")
     end
@@ -70,6 +73,25 @@ function get_model_filename(modelName::AbstractString, tool::AbstractString, ver
 end
 
 
+function get_model_filename(modelID::Integer, tool::AbstractString, version::AbstractString)
+    if modelID < 1
+        error("Pass a modelID >= 1.")
+    end
+
+    if modelID > length(modelNames)
+        error("There are only $(length(modelNames)) models to choose from. Pass modelID between 1 and $(length(modelNames)). Do `list_models()` to list your options.")
+    end
+    
+    return get_model_filename(modelNames[modelID], tool, version)
+end
+
+
+# TODO prevent this function from downloading on EVERY call. replace `print` by a more appropriate logging function or even an assertion? what happens if the requested model is not found? any information for the user?
+"""
+    download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
+
+Returns the path to an FMU from https://github.com/modelica/Reference-FMUs. If neccessary, all available FMUs are downloaded and saved to a temporary directory at first.
+"""
 function download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
 
     zipPath = Downloads.download("https://github.com/modelica/Reference-FMUs/releases/download/v$(version)/Reference-FMUs-$(version).zip")
@@ -97,14 +119,41 @@ function download_reference_FMU(modelName::AbstractString, version::AbstractStri
 end
 
 
-function get_model_filename(modelID::Integer, tool::AbstractString, version::AbstractString)
-    if modelID < 1
-        error("Pass a modelID >= 1.")
+"""
+    generate_mos_scripts()
+Generate .mos scripts in `$(p_mos_scripts)` to automate the tool-dependent creation of FMUs.
+"""
+function generate_mos_scripts(; verbose=true)
+    for (name, func) in mosGenerators.generators
+        open(io -> write(io, func()), joinpath(p_mos_scripts, "$(name).mos"), "w")
     end
 
-    if modelID > length(modelNames)
-        error("There are only $(length(modelNames)) models to choose from. Pass modelID between 1 and $(length(modelNames)). Do `list_models()` to list your options.")
+    verbose && @info "Generated all mos scripts in $(p_mos_scripts).\nYou can now copy a path to one of those scripts depending on your Modelica tool and have it executed there to generate all model FMUs into $(p_model_src).\nWhen that's done, call `collect_fmus`."
+end
+
+
+"""
+    collect_fmus([dst])
+Extracts all FMUs found in directory $(p_model_src) into directory `dst` if specified. Otherwise, the FMUs are moved into a temporary directory.
+"""
+function collect_fmus(p_dst::Union{AbstractString, Nothing}=nothing)
+
+    if isnothing(p_dst)
+        _p_dst = mktempdir(cleanup=false)
+    else
+        _p_dst = p_dst
     end
     
-    return get_model_filename(modelNames[modelID], tool, version)
+    fmuPaths = glob("*.fmu", FMIZoo.p_model_src)
+
+    @assert length(fmuPaths) > 0 "Could not find any FMUs in $(p_model_src). Did you run `FMIZoo.generate_mos_scripts` and have a fitting script executed by your Modelica tool?"
+
+    for fmup in fmuPaths
+        fn = splitpath(fmup)[end]
+        mv(fmup, joinpath(_p_dst, fn))
+    end
+
+    @info "Moved $(length(fmuPaths)) FMU file(s) to $(_p_dst)."
+    isnothing(p_dst) && @info "Move the contents into the desired folder!"
+
 end

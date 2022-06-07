@@ -9,6 +9,7 @@ using FMIZoo
 @testset "FMIZoo.jl" begin
     list_models()
     
+    # get_model_filename#1
     path = get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x") 
     @test length(path) > 0 
     split = splitpath(path) 
@@ -27,4 +28,8 @@ using FMIZoo
 
     @test split[end] ==  "BouncingBall.fmu"
     @test split[end-1] ==  "BouncingBall"
+
+    # generate_mos_scripts
+    generate_mos_scripts(verbose=false)
+    @test isfile(joinpath(FMIZoo.p_mos_scripts, "Dymola2022x.mos"))
 end
