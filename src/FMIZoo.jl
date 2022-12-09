@@ -23,6 +23,21 @@ include(joinpath(@__DIR__, "mosGenerators.jl"))
 export list_models, get_model_filename, generate_mos_scripts, collect_fmus
 include(joinpath(@__DIR__, "util.jl"))
 
+# function fmi2Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...)
+#     @warn "fmi2Load(...) needs `FMIImport` package. Please install `FMIImport` and do `using FMIImport` or `import FMIImport`."
+# end
+# export fmi2Load
+
+# function fmi3Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...)
+#     @warn "fmi3Load(...) needs `FMIImport` package. Please install `FMIImport` and do `using FMIImport` or `import FMIImport`."
+# end
+# export fmi3Load
+
+# function fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...)
+#     @warn "fmiLoad(...) needs `FMI` package. Please install `FMI` and do `using FMI` or `import FMI`."
+# end
+# export fmiLoad
+
 function __init__()
     @require FMIImport="9fcbc62e-52a0-44e9-a616-1359a0008194" begin 
         include(joinpath(@__DIR__, "addon.jl"))
@@ -39,5 +54,8 @@ function __init__()
         FMI.fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = fmiLoad(name, tool, version, fmiversion; kwargs...)
     end
 end
+
+# data 
+include(joinpath(@__DIR__, "VLDM.jl"))
 
 end
