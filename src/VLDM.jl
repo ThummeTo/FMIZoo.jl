@@ -5,7 +5,7 @@
 
 using MAT
 using NumericalIntegration
-import Interpolations: linear_interpolation
+import NumericalIntegration.Interpolations: linear_interpolation
 
 function movavg!(data::AbstractArray{<:Real}, dist::Integer)
     @assert dist%2 == 0 "Argument dist must be multiple of 2."
