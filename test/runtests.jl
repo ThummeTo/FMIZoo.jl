@@ -14,20 +14,22 @@ using FMIZoo
     @test length(path) > 0 
     split = splitpath(path) 
 
-    @test split[end] ==  "SpringDamperPendulum1D.fmu"
-    @test split[end-1] ==  "2.0"
-    @test split[end-2] ==  "2022x"
-    @test split[end-3] ==  "Dymola"
-    @test split[end-4] ==  "bin"
-    @test split[end-5] ==  "models"
-    @test split[end-6] ==  "FMIZoo.jl"
+    @test split[end] == "SpringDamperPendulum1D.fmu"
+    @test split[end-1] == "2.0"
+    @test split[end-2] == "2022x"
+    @test split[end-3] == "Dymola"
+    @test split[end-4] == "bin"
+    @test split[end-5] == "models"
+    @test split[end-6] == "FMIZoo.jl"
 
     path = get_model_filename("BouncingBall", "ModelicaReferenceFMUs", "0.0.14", "3.0")
     @test length(path) > 0 
     split = splitpath(path) 
 
-    @test split[end] ==  "BouncingBall.fmu"
-    @test split[end-1] ==  "BouncingBall"
+    @test split[end] == "BouncingBall.fmu"
+    @test split[end-1] == "3.0"
+    @test split[end-2] == "0.0.14"
+    @test split[end-3] == "ModelicaReferenceFMUs"
 
     # generate_mos_scripts
     generate_mos_scripts(verbose=false)

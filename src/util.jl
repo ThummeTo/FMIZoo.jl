@@ -86,7 +86,6 @@ function get_model_filename(modelID::Integer, tool::AbstractString, version::Abs
 end
 
 
-# TODO prevent this function from downloading on EVERY call. replace `print` by a more appropriate logging function or even an assertion? what happens if the requested model is not found? any information for the user?
 """
     download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
 
@@ -94,26 +93,44 @@ Returns the path to an FMU from https://github.com/modelica/Reference-FMUs. If n
 """
 function download_reference_FMU(modelName::AbstractString, version::AbstractString="0.0.14", fmiversion::AbstractString="2.0")
 
-    zipPath = Downloads.download("https://github.com/modelica/Reference-FMUs/releases/download/v$(version)/Reference-FMUs-$(version).zip")
-    dir = dirname(zipPath)
-    zarchive = ZipFile.Reader(zipPath)
+    zipPath = nothing
 
-    path = joinpath(dir, "$(modelName)/")
+    if !haskey(ENV, "ModelicaReferenceFMUs" * version)
+        @info "No reference FMUs found for version $(version), downloading..."
+        
+        zipPath = Downloads.download("https://github.com/modelica/Reference-FMUs/releases/download/v$(version)/Reference-FMUs-$(version).zip")
+        ENV["ModelicaReferenceFMUs" * version] = zipPath
+    else
+        zipPath = ENV["ModelicaReferenceFMUs" * version]
+    end 
+
+    dir = dirname(zipPath)
+    path = joinpath(dir, "ModelicaReferenceFMUs", "$(version)", "$(fmiversion)")
     pathToFmu = joinpath(path, "$(modelName).fmu")
 
-    for f in zarchive.files
-        if f.name == "$(fmiversion)/$(modelName).fmu"
-            if !ispath(path)
-                mkdir(path)
-            end
-            
-            numBytes = write(pathToFmu, read(f))
-            if numBytes == 0
-                print("Not able to read!")
+    if !isfile(pathToFmu)
+
+        @info "No reference FMU unpacked, unpacking..."
+
+        zarchive = ZipFile.Reader(zipPath)
+
+        for f in zarchive.files
+            if f.name == "$(fmiversion)/$(modelName).fmu"
+                if !ispath(path)
+                    @info "No path for FMU found, creating..."
+                    mkpath(path)
+                end
+                
+                numBytes = write(pathToFmu, read(f))
+                if numBytes == 0
+                    print("Not able to read!")
+                end
             end
         end
+        close(zarchive)
     end
-    close(zarchive)
+
+    @assert isfile(pathToFmu) "Unpacking FMU failed, does the FMU name really exist in the reference FMU release $(version)?"
 
     return pathToFmu
 end
