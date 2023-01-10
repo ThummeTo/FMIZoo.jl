@@ -4,8 +4,23 @@
 #
 
 using MAT
-using NumericalIntegration
-import NumericalIntegration.Interpolations: linear_interpolation
+import Interpolations: linear_interpolation
+
+function cumul_integrate(ts, vals)
+    integ = [0.0]
+    for i in 1:length(ts)-1
+
+        dt = ts[i+1] - ts[i]
+        _min = min(vals[i], vals[i+1])
+        _max = max(vals[i], vals[i+1])
+
+        sum = integ[i] + dt * _min + 1/2 * dt * (_max-_min)
+
+        push!(integ, sum)
+    end
+
+    return integ
+end
 
 function movavg!(data::AbstractArray{<:Real}, dist::Integer)
     @assert dist%2 == 0 "Argument dist must be multiple of 2."
@@ -49,7 +64,7 @@ struct VLDM_Data{T}
     params::Dict{String, Any}
 end
 
-function VLDM(;split::Symbol, filter::Bool=true, dt::Union{Real, Nothing}=nothing)
+function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}=nothing)
 
     @assert split==:test || split==:train "VLDM keyword `split` must be `:train` or `:test`."
 

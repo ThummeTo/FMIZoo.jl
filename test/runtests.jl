@@ -32,4 +32,10 @@ using FMIZoo
     # generate_mos_scripts
     generate_mos_scripts(verbose=false)
     @test isfile(joinpath(FMIZoo.p_mos_scripts, "Dymola2022x.mos"))
+
+    # VLDM
+    data = FMIZoo.VLDM()
+    @test length(data.position_t) == 110143
+    @test length(data.speed_t) == 110143
+    @test length(data.consumption_t) == 110143
 end
