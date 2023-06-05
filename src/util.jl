@@ -60,7 +60,7 @@ function get_model_filename(modelName::AbstractString, tool::AbstractString, ver
         fmiversions = map(g) do x
             splitpath(x)[end]
         end
-        error("\"$(fmiversion)\" does not specify an existing version. Pick one of these: $(fmiversions)")
+        error("\"$(fmiversion)\" does not specify an existing FMI version. Pick one of these: $(fmiversions)")
     end
 
     p_model = joinpath(p_fmiver, modelName * ".fmu")
