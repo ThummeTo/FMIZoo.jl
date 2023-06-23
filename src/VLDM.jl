@@ -5,6 +5,13 @@
 
 using MAT
 import Interpolations: linear_interpolation
+import Optim
+
+function objective(p, d1, d2)
+    @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
+    n = length(d1)
+    return sum(collect((d1[i]-d2[i])^2 for i in 1:n)) / n
+end
 
 function cumul_integrate(ts, vals)
     integ = [0.0]
@@ -69,7 +76,52 @@ struct VLDM_Data{T}
     params::Dict{String, Any}
 end
 
-function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}=nothing, cycle=Union{String, Nothing}=nothing)
+function correctCumConsumption!(t, con, cumcon)
+   
+    cumcon_integ = cumul_integrate(t, con)
+    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
+   
+    scale = opt.minimizer[1]
+    cumcon_integ = cumcon_integ .* scale 
+
+    cumcon[:] = cumcon_integ[:]
+    return nothing
+end
+
+function shiftarray!(array, inds, shifts)
+    for j in 1:length(inds)
+        ind = inds[j]
+        shift = shifts[j]
+
+        # doesn't affect this array
+        if ind > length(array)
+            continue 
+        end
+
+        left = array[ind]
+        right = array[ind+1]
+        for i in 1:shift
+            pop!(array)
+            insert!(array, ind+i, left + (right-left)/shift*i) # linear interpolation
+        end
+        
+    end
+end
+
+function correctTimeShifts!(array)
+    inds = [round(Int, 986.69*100), round(Int, 574.80*100)]
+    shifts = [round(Int, 0.98*100), round(Int, 5.35*100)]
+
+    shiftarray!(array, inds, shifts)
+    
+    return nothing
+end
+
+function VLDM(;split::Symbol=:train, 
+               filter::Bool=true, 
+               dt::Union{Real, Nothing}=nothing, 
+               cycle::Union{String, Nothing}=nothing, 
+               pre_pocess::Bool=true)
 
     @assert split==:test || split==:train "VLDM keyword `split` must be `:train` or `:test`."
 
@@ -112,44 +164,64 @@ function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}
         if split == :test
             cycle = "WLTCC2_Complete_0"
         elseif split == :train
-            cycle = "Artemis_Road_100_0"
+            cycle = "WLTCC2Low_100_0"
         else
             @assert false "Unknown split!"
         end
 
         tlen = min(length(experiment["$(cycle)1"]["VehicleSpeedFiltered"][:, 1]), length(experiment["$(cycle)2"]["VehicleSpeedFiltered"][:, 1]))
 
-        # vehicle speed (filtered)
         speed_t = experiment["$(cycle)1"]["VehicleSpeedFiltered"][1:tlen, 1]
+        speed_vals = collect(copy(experiment["$(cycle)$(e)"]["VehicleSpeedFiltered"][1:tlen, 2]) for e in 1:numExperiments)
+
+        consumption_t = experiment["$(cycle)1"]["Voltage"][1:tlen, 1]
+        consumption_vals = collect(copy(experiment["$(cycle)$(e)"]["Voltage"][1:tlen, 2] .* experiment["$(cycle)$(e)"]["Current"][1:tlen, 2]) for e in 1:numExperiments)
+
+        cumconsumption_t = experiment["$(cycle)1"]["Consumption"][1:tlen, 1]
+        cumconsumption_vals = collect(copy(3600.0 .* experiment["$(cycle)$(e)"]["Consumption"][1:tlen, 2]) for e in 1:numExperiments)
+
+        if pre_pocess
+            correctTimeShifts!(speed_vals[2])
+            correctTimeShifts!(consumption_vals[2])
+            correctTimeShifts!(cumconsumption_vals[2])
+
+            for e in 1:numExperiments
+                correctCumConsumption!(consumption_t, consumption_vals[e], cumconsumption_vals[e])
+            end
+        end
+
+        # vehicle speed (filtered)
         speed_val = zeros(tlen)
         for e in 1:numExperiments
-            v = experiment["$(cycle)$(e)"]["VehicleSpeedFiltered"][1:tlen, 2]
-            speed_val .+= 1.0 / numExperiments * v
+            speed_val .+= 1.0 / numExperiments * speed_vals[e]
         end
-        speed_dev = abs.(experiment["$(cycle)1"]["VehicleSpeedFiltered"][1:tlen, 2] - speed_val)
+        speed_dev = abs.(speed_vals[1] - speed_val)
 
         # position 
         position_t = speed_t
         position_val = cumul_integrate(speed_t, speed_val)
         position_dev = cumul_integrate(speed_t, speed_dev)
     
-        # consumption
-        consumption_t = experiment["$(cycle)1"]["Consumption"][1:tlen, 1]
+        # cumulative consumption
+        cumconsumption_val = zeros(tlen)
+        for e in 1:numExperiments
+            c = cumconsumption_vals
+            cumconsumption_val .+= 1.0 / numExperiments * cumconsumption_vals[e]
+        end
+        cumconsumption_dev = abs.(cumconsumption_vals[1] - cumconsumption_val)
+
+        # consumption 
         consumption_val = zeros(tlen)
         for e in 1:numExperiments
-            c = experiment["$(cycle)$(e)"]["Consumption"][1:tlen, 2]
-            consumption_val .+= 3600.0 / numExperiments * c
+            consumption_val .+= 1.0 / numExperiments * consumption_vals[e]
         end
-        consumption_dev = abs.(3600.0 .* experiment["$(cycle)1"]["Consumption"][1:tlen, 2] - consumption_val)
+        consumption_dev = abs.(consumption_vals[1] - consumption_val)
 
-        # filter 
-        if filter 
-            movavg!(consumption_val, 250)
-        end
-
+        # interpolators
         speed_val_inter = linear_interpolation(speed_t, speed_val)
         position_val_inter = linear_interpolation(position_t, position_val)
         consumption_val_inter = linear_interpolation(consumption_t, consumption_val)
+        cumconsumption_val_inter = linear_interpolation(cumconsumption_t, cumconsumption_val)
     else
 
         expID =  parse(Int, cycle[end])
@@ -157,11 +229,12 @@ function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}
         tlen = length(experiment["$(cycle)"]["VehicleSpeedFiltered"][:, 1])
 
         t_off = 0.0
-        if startswith(cycle, "WLTCC2Middle_100_0")
-            t_off = 589.0 # experiment["WLTCC2Low_100_0$(expID)"]["DrivingCycle"][end, 1]
-        elseif startswith(cycle, "WLTCC2High_100_0")
-            t_off = 589.0+433.0 # experiment["WLTCC2Low_100_0$(expID)"]["DrivingCycle"][end, 1] + experiment["WLTCC2Middle_100_0$(expID)"]["DrivingCycle"][end, 1]
-        end
+        # if startswith(cycle, "WLTCC2Middle_100_0")
+        #     t_off = 589.0 # experiment["WLTCC2Low_100_0$(expID)"]["DrivingCycle"][end, 1]
+        # elseif startswith(cycle, "WLTCC2High_100_0")
+        #     t_off = 589.0+433.0 - 15.56 # ToDo: This is a measured offset.
+        #      # experiment["WLTCC2Low_100_0$(expID)"]["DrivingCycle"][end, 1] + experiment["WLTCC2Middle_100_0$(expID)"]["DrivingCycle"][end, 1]
+        # end
 
         # vehicle speed (filtered)
         speed_t = experiment["$(cycle)"]["VehicleSpeedFiltered"][1:tlen, 1] .+ t_off
@@ -184,8 +257,18 @@ function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}
         consumption_dev = zeros(length(consumption_val))
 
         # filter 
-        if filter 
-            movavg!(consumption_val, 250)
+        # if filter 
+        #     movavg!(consumption_val, 250)
+        # end
+
+        if pre_pocess
+            if endswith(cycle, "2")
+                correctTimeShifts!(speed_val)
+                correctTimeShifts!(consumption_val)
+                correctTimeShifts!(cumconsumption_val)
+            end
+
+            correctCumConsumption!(consumption_t, consumption_val, cumconsumption_val)
         end
 
         speed_val_inter = linear_interpolation(speed_t, speed_val)
@@ -195,7 +278,7 @@ function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}
     end
 
     # interpolate
-    if dt != nothing
+    if !isnothing(dt)
             
         interp_dev = linear_interpolation(speed_t, speed_dev)
         speed_t = speed_t[1]:dt:speed_t[end] 
@@ -233,11 +316,13 @@ function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}
     # closing file 
     close(file)
 
-    return VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
+    data =  VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
         speed_t, speed_val, speed_dev, speed_val_inter, 
         consumption_t, consumption_val, consumption_dev, consumption_val_inter,
         cumconsumption_t, cumconsumption_val, cumconsumption_dev, cumconsumption_val_inter,
         params)
+
+    return data
 end
 
 function getStateVector(data::VLDM_Data, time::Real)

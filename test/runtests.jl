@@ -37,7 +37,8 @@ using FMIZoo
 
     # VLDM
     data = FMIZoo.VLDM()
-    @test length(data.position_t) == 110143
-    @test length(data.speed_t) == 110143
-    @test length(data.consumption_t) == 110143
+    @test length(data.position_t) == 58374
+    @test length(data.speed_t) == 58374
+    @test length(data.consumption_t) == 58374
+    @test length(data.cumconsumption_t) == 58374
 end
