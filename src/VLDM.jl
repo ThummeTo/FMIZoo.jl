@@ -10,7 +10,7 @@ import Optim
 function objective(p, d1, d2)
     @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
     n = length(d1)
-    return sum(collect((d1[i]-d2[i])^2 for i in 1:n)) / n
+    return sum(collect((d1[i]-d2[i]*p[1])^2 for i in 1:n)) / n
 end
 
 function cumul_integrate(ts, vals)
@@ -82,6 +82,7 @@ function correctCumConsumption!(t, con, cumcon)
     opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
    
     scale = opt.minimizer[1]
+    @info "$(scale)"
     cumcon_integ = cumcon_integ .* scale 
 
     cumcon[:] = cumcon_integ[:]
@@ -161,6 +162,7 @@ function VLDM(;split::Symbol=:train,
     expID = -1
 
     if isnothing(cycle) 
+        
         if split == :test
             cycle = "WLTCC2_Complete_0"
         elseif split == :train
