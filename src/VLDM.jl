@@ -76,16 +76,18 @@ struct VLDM_Data{T}
     params::Dict{String, Any}
 end
 
-function correctCumConsumption!(t, con, cumcon)
+function correctCumConsumption!(e, t, con, cumcon)
    
     cumcon_integ = cumul_integrate(t, con)
-    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
+    # opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
    
-    scale = opt.minimizer[1]
-    @info "$(scale)"
-    cumcon_integ = cumcon_integ .* scale 
+    # scale = opt.minimizer[1]
+    # @info "$(scale)"
+    scales = [1.0007126267053534, 1.0016768135377787]
+    scale = scales[e]
+    #cumcon_integ = cumcon_integ .* scale 
 
-    cumcon[:] = cumcon_integ[:]
+    cumcon[:] = cumcon_integ[:] .* scale 
     return nothing
 end
 
@@ -188,7 +190,7 @@ function VLDM(;split::Symbol=:train,
             correctTimeShifts!(cumconsumption_vals[2])
 
             for e in 1:numExperiments
-                correctCumConsumption!(consumption_t, consumption_vals[e], cumconsumption_vals[e])
+                correctCumConsumption!(e, consumption_t, consumption_vals[e], cumconsumption_vals[e])
             end
         end
 
@@ -270,7 +272,7 @@ function VLDM(;split::Symbol=:train,
                 correctTimeShifts!(cumconsumption_val)
             end
 
-            correctCumConsumption!(consumption_t, consumption_val, cumconsumption_val)
+            correctCumConsumption!(expID, consumption_t, consumption_val, cumconsumption_val)
         end
 
         speed_val_inter = linear_interpolation(speed_t, speed_val)
