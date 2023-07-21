@@ -1,7 +1,7 @@
 name = "FMIZoo"
 uuid = "724179cf-c260-40a9-bd27-cccc6fe2f195"
 authors = ["FB <frederic.bruder@uni-a.de>", "TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
-version = "0.2.3"
+version = "0.3.0"
 
 [deps]
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -10,6 +10,7 @@ FilePathsBase = "48062228-2e41-5def-b9a4-89aafe57970f"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
@@ -19,6 +20,7 @@ FilePathsBase = "0.9.0"
 Glob = "1.3.0"
 Interpolations = "0.14.0"
 MAT = "0.10.3"
+Optim = "1.7.6"
 Requires = "1.3.0"
 ZipFile = "0.10.0"
 julia = "1.6"

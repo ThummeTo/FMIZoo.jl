@@ -5,6 +5,16 @@
 
 using MAT
 import Interpolations: linear_interpolation
+import Optim
+
+WLTCC2_INDICES = [round(Int, 986.69*100), round(Int, 574.80*100)]
+WLTCC2_SHIFTS = [round(Int, 0.98*100), round(Int, 5.35*100)]
+
+function objective(p, d1, d2)
+    @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
+    n = length(d1)
+    return sum(collect((d1[i]-d2[i]*p[1])^2 for i in 1:n)) / n
+end
 
 function cumul_integrate(ts, vals)
     integ = [0.0]
@@ -61,95 +71,235 @@ struct VLDM_Data{T}
     consumption_dev::Array{T}
     consumption_val_inter
 
+    cumconsumption_t::Array{T}
+    cumconsumption_val::Array{T}
+    cumconsumption_dev::Array{T}
+    cumconsumption_val_inter
+
     params::Dict{String, Any}
 end
 
-function VLDM(;split::Symbol=:train, filter::Bool=true, dt::Union{Real, Nothing}=nothing)
+function correctCumConsumption!(t, con, cumcon)
+   
+    cumcon_integ = cumul_integrate(t, con)
+    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
+    scale = opt.minimizer[1]
+    # @info "$(scale)"
+    #scales = [1.0007126267053534, 1.0016768135377787]
+    #scale = scales[e]
+    #cumcon_integ = cumcon_integ .* scale 
 
-    @assert split==:test || split==:train "VLDM keyword `split` must be `:train` or `:test`."
+    #@info "Cumulative consumption corrected by factor $(scale) (based on current consumption optimization)."
+
+    cumcon[:] = cumcon_integ[:] .* scale 
+    return nothing
+end
+
+function shiftarray!(array, inds, shifts)
+    for j in 1:length(inds)
+        ind = inds[j]
+        shift = shifts[j]
+
+        # doesn't affect this array
+        if ind > length(array)
+            continue 
+        end
+
+        left = array[ind]
+        right = array[ind+1]
+        for i in 1:shift
+            pop!(array)
+            insert!(array, ind+i, left + (right-left)/shift*i) # linear interpolation
+        end
+        
+    end
+end
+
+function correctTimeShifts!(array, inds, shifts)
+    shiftarray!(array, inds, shifts)
+    
+    return nothing
+end
+
+function VLDM(cycle::Union{String, Symbol};
+               experiments::Union{Int, UnitRange{<:Int}}=1:2, 
+               filterSpeed::Bool=true, 
+               dt::Union{Real, Nothing}=0.1,  
+               pre_pocess::Bool=true)
+
+    @assert !isa(cycle, Symbol) || cycle ∈ (:cycle, :test, :train, :validate) "VLDM keyword `cycle` must be `:train`, `:test`, `:validate` or a String."
+    @assert !isa(cycle, String) || cycle ∈ ("WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road") "VLDM keyword `cycle` must be `WLTCC2_Low`, `WLTCC2_Complete`, `Artemis_Road`."
+    @assert experiments ∈ (1, 2, 1:2) "VLDM keyword `experiments` must be `1`, `2` or `1:2`."
+
+    if cycle == :train 
+        cycle = "WLTCC2_Low"
+    elseif cycle == :validate
+        cycle = "WLTCC2_Complete"
+    elseif cycle == :test
+        cycle = "Artemis_Road"
+    end
+
+    # correct identifiers to mathc table entries
+    if cycle == "WLTCC2_Low"
+        cycle = "WLTCC2Low_100"
+    elseif cycle == "Artemis_Road"
+        cycle = "Artemis_Road_100"
+    end
+    cycle = cycle * "_0"
+
+    # pack scalar experiements into an array
+    if isa(experiments, Int)
+        experiments = [experiments]
+    end
 
     # open data file
     path = joinpath(dirname(@__FILE__), "..", "data", "VLDM", "SmartFortwo_ExperimentsExtracted.mat")
     file = matopen(path)
     experiment = read(file, "experiment")
-    numExperiments = 2
+    numExperiments = length(experiments)
 
     # parameter dict for FMU 
     params = Dict{String, Any}()
     params["peFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "PowerElectronics", "PowerElectronicsData.mat")
     params["edFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "ElectricDrive", "ElectricDriveData.mat") 
 
-    cycle = "" 
-    if split == :test
-        cycle = "WLTCC2_Complete_0"
-        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "WLTP_class_2.mat")
-    elseif split == :train
-        cycle = "Artemis_Road_100_0"
-        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "CADC_Road.mat")
-    else
-        @assert false "Unknown split!"
+    tlen = nothing
+
+    position_t = nothing
+    position_val = nothing
+    position_dev = nothing
+    position_val_inter = nothing
+
+    speed_t = nothing
+    speed_val = nothing
+    speed_dev = nothing
+    speed_val_inter = nothing
+
+    consumption_t = nothing
+    consumption_val = nothing
+    consumption_dev = nothing
+    consumption_val_inter = nothing
+
+    cumconsumption_t = nothing
+    cumconsumption_val = nothing
+    cumconsumption_dev = nothing
+    cumconsumption_val_inter = nothing
+
+    # load data 
+
+    speedField = "VehicleSpeed"
+    if filterSpeed
+        speedField *= "Filtered"
     end
 
-    tlen = min(length(experiment["$(cycle)1"]["VehicleSpeedFiltered"][:, 1]), length(experiment["$(cycle)2"]["VehicleSpeedFiltered"][:, 1]))
+    tlen = min(collect(length(experiment["$(cycle)$(e)"][speedField][:, 1]) for e in experiments)...)
+    speed_t = experiment["$(cycle)$(experiments[1])"][speedField][1:tlen, 1]
+    speed_vals = collect(copy(experiment["$(cycle)$(e)"][speedField][1:tlen, 2]) for e in experiments)
+    
+    consumption_t = experiment["$(cycle)$(experiments[1])"]["Voltage"][1:tlen, 1]
+    consumption_vals = collect(copy(experiment["$(cycle)$(e)"]["Voltage"][1:tlen, 2] .* experiment["$(cycle)$(e)"]["Current"][1:tlen, 2]) for e in experiments)
 
-    # vehicle speed (filtered)
-    speed_t = experiment["$(cycle)1"]["VehicleSpeedFiltered"][1:tlen, 1]
+    cumconsumption_t = experiment["$(cycle)$(experiments[1])"]["Consumption"][1:tlen, 1]
+    cumconsumption_vals = collect(copy(3600.0 .* experiment["$(cycle)$(e)"]["Consumption"][1:tlen, 2]) for e in experiments)
+
+    if pre_pocess
+        if startswith(cycle, "WLTCC2")
+            for i in 1:numExperiments
+                if experiments[i] == 2
+                    correctTimeShifts!(speed_vals[i], WLTCC2_INDICES, WLTCC2_SHIFTS)
+                    correctTimeShifts!(consumption_vals[i], WLTCC2_INDICES, WLTCC2_SHIFTS)
+                    correctTimeShifts!(cumconsumption_vals[i], WLTCC2_INDICES, WLTCC2_SHIFTS)
+                end
+            end
+        elseif startswith(cycle, "Artemis_Road")
+            # no correction needed :-)
+        else
+            @assert false "No time shift correction implemented for cycle `$(cycle)`"
+        end
+
+        for i in 1:numExperiments
+            correctCumConsumption!(consumption_t, consumption_vals[i], cumconsumption_vals[i])
+        end
+    end
+
+    # vehicle speed deviation
     speed_val = zeros(tlen)
-    for e in 1:numExperiments
-        v = experiment["$(cycle)$(e)"]["VehicleSpeedFiltered"][1:tlen, 2]
-        speed_val .+= 1.0 / numExperiments * v
+    for i in 1:numExperiments
+        speed_val .+= 1.0 / numExperiments * speed_vals[i]
     end
-    speed_dev = abs.(experiment["$(cycle)1"]["VehicleSpeedFiltered"][1:tlen, 2] - speed_val)
+    speed_dev = abs.(speed_vals[1] - speed_val)
 
-    # position 
+    # position (and deviation)
     position_t = speed_t
     position_val = cumul_integrate(speed_t, speed_val)
     position_dev = cumul_integrate(speed_t, speed_dev)
-   
-    # consumption
-    consumption_t = experiment["$(cycle)1"]["Consumption"][1:tlen, 1]
+
+    # cumulative consumption deviation
+    cumconsumption_val = zeros(tlen)
+    for i in 1:numExperiments
+        cumconsumption_val .+= 1.0 / numExperiments * cumconsumption_vals[i]
+    end
+    cumconsumption_dev = abs.(cumconsumption_vals[1] - cumconsumption_val)
+
+    # consumption deviation
     consumption_val = zeros(tlen)
-    for e in 1:numExperiments
-        c = experiment["$(cycle)$(e)"]["Consumption"][1:tlen, 2]
-        consumption_val .+= 3600.0 / numExperiments * c
+    for i in 1:numExperiments
+        consumption_val .+= 1.0 / numExperiments * consumption_vals[i]
     end
-    consumption_dev = abs.(3600.0 .* experiment["$(cycle)1"]["Consumption"][1:tlen, 2] - consumption_val)
+    consumption_dev = abs.(consumption_vals[1] - consumption_val)
 
-    # filter 
-    if filter 
-        movavg!(consumption_val, 250)
-    end
-
+    # interpolators (linear)
     speed_val_inter = linear_interpolation(speed_t, speed_val)
     position_val_inter = linear_interpolation(position_t, position_val)
     consumption_val_inter = linear_interpolation(consumption_t, consumption_val)
+    cumconsumption_val_inter = linear_interpolation(cumconsumption_t, cumconsumption_val)
 
     # interpolate
-    if dt != nothing
+    if !isnothing(dt)
         
         interp_dev = linear_interpolation(speed_t, speed_dev)
-        speed_t = speed_t[1]:dt:speed_t[end]
+        speed_t = speed_t[1]:dt:speed_t[end] 
         speed_val = speed_val_inter.(speed_t)
         speed_dev = interp_dev.(speed_t)
 
         interp_dev = linear_interpolation(position_t, position_dev)
-        position_t_t = position_t[1]:dt:position_t[end]
+        position_t = position_t[1]:dt:position_t[end] 
         position_val = position_val_inter.(position_t)
         position_dev = interp_dev.(position_t)
 
         interp_dev = linear_interpolation(consumption_t, consumption_dev)
-        consumption_t = consumption_t[1]:dt:consumption_t[end]
+        consumption_t = consumption_t[1]:dt:consumption_t[end] 
         consumption_val = consumption_val_inter.(consumption_t)
         consumption_dev = interp_dev.(consumption_t)
+
+        interp_dev = linear_interpolation(cumconsumption_t, cumconsumption_dev)
+        cumconsumption_t = cumconsumption_t[1]:dt:cumconsumption_t[end] 
+        cumconsumption_val = cumconsumption_val_inter.(cumconsumption_t)
+        cumconsumption_dev = interp_dev.(cumconsumption_t)
+    end
+
+    if startswith(cycle, "WLTCC2")
+        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "WLTP_class_2.mat")
+    elseif startswith(cycle, "Artemis_Road_100_0")
+        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "CADC_Road.mat")
+    elseif startswith(cycle, "Artemis_Urban_100_0")
+        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "CADC_Urban.mat")
+    elseif startswith(cycle, "NEDC_100_0")
+        params["dcFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "DrivingCycle", "EUROPE_NEDC.mat")
+    else
+        @assert false "Unknown cycle!"
     end
 
     # closing file 
     close(file)
 
-    return VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
+    data =  VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
         speed_t, speed_val, speed_dev, speed_val_inter, 
         consumption_t, consumption_val, consumption_dev, consumption_val_inter,
+        cumconsumption_t, cumconsumption_val, cumconsumption_dev, cumconsumption_val_inter,
         params)
+
+    return data
 end
 
 function getStateVector(data::VLDM_Data, time::Real)
@@ -167,7 +317,7 @@ function getStateVector(data::VLDM_Data, time::Real)
     state[3] = data.position_val_inter(time)
     state[4] = data.position_val_inter(time)
     state[5] = data.speed_val_inter(time)
-    state[6] = data.consumption_val_inter(time)
+    state[6] = data.cumconsumption_val_inter(time)
     
     return state
 end 
