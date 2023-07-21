@@ -35,10 +35,23 @@ using FMIZoo
     generate_mos_scripts(verbose=false)
     @test isfile(joinpath(FMIZoo.p_mos_scripts, "Dymola2022x.mos"))
 
-    # VLDM
-    data = FMIZoo.VLDM()
-    @test length(data.position_t) == 58374
-    @test length(data.speed_t) == 58374
-    @test length(data.consumption_t) == 58374
-    @test length(data.cumconsumption_t) == 58374
+    # check available data in VLDM
+    cycles = (:train, :test, :validate, "WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road")
+    lens = (5838, 14446, 11301, 5838, 14446, 11301)
+    for i in 1:length(cycles)
+        cycle = cycles[i]
+        len = lens[i]
+
+        data = FMIZoo.VLDM(cycle; experiments=1:2)
+        data = FMIZoo.VLDM(cycle; experiments=1)
+        data = FMIZoo.VLDM(cycle; experiments=2)
+
+        for prop ∈ (:position_t, :position_val, :position_dev, 
+            :speed_t, :speed_val, :speed_dev, 
+            :consumption_t, :consumption_val, :consumption_dev, 
+            :cumconsumption_t, :cumconsumption_val, :cumconsumption_dev)
+    
+            @test length(getfield(data, prop)) == len
+        end
+    end
 end
