@@ -36,7 +36,7 @@ using FMIZoo
     @test isfile(joinpath(FMIZoo.p_mos_scripts, "Dymola2022x.mos"))
 
     # check available data in VLDM
-    cycles = (:train, :test, :validate, "WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road")
+    cycles = (:train, :validate, :test, "WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road")
     lens = (5838, 14446, 11301, 5838, 14446, 11301)
     for i in 1:length(cycles)
         cycle = cycles[i]
