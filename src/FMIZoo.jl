@@ -52,6 +52,9 @@ function __init__()
 
         import .FMI
         FMI.fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = fmiLoad(name, tool, version, fmiversion; kwargs...)
+
+        # RobotRR simulates FMUs for synthetic data, so FMI.jl is required
+        include(joinpath(@__DIR__, "RobotRR.jl"))
     end
 end
 
