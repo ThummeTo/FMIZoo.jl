@@ -137,7 +137,7 @@ function getParameter(dataset::Symbol; friction::Bool=true)
 end 
 
 function getParameter(data::RobotRR_Data, t::Real; kwargs...) 
-    params = getParameter(data.set, t; kwargs...)
+    params = getParameter(data.set; kwargs...)
 
     values = solution.values.saveval(t)
 
