@@ -37,9 +37,9 @@ struct RobotRR_Data{T}
 end
 
 function RobotRR(dataset::Symbol;
-               dt::Union{Real, Nothing}=0.01, friction::Bool=true, x0=[0.0, 0.0, 0.3, 0.0, 0.0, 0.0])
+               dt::Union{Real, Nothing}=0.01, friction::Bool=true, x0=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], showProgress=false)
 
-    @assert dataset ∈ (:test, :train, :validate) "RobotRR keyword `dataset` must be `:train`, `:test` or `:validate`."
+    @assert dataset ∈ (:test, :train, :validate, :thanks, :A, :B, :L) "RobotRR keyword `dataset` must be ∈ (:test, :train, :validate, :thanks, :A, :B, :L)."
 
     # parameter dict for FMU 
     params = getParameter(dataset; friction=friction)
@@ -75,7 +75,7 @@ function RobotRR(dataset::Symbol;
         "rRPositionControl_Elasticity.tCP.p_x", "rRPositionControl_Elasticity.tCP.p_y", 
         "rRPositionControl_Elasticity.tCP.v_x", "rRPositionControl_Elasticity.tCP.v_y"]
 
-    solution = FMI.fmiSimulate(fmu, (tStart, tStop); solver=Tsit5(), x0=x0, recordValues=recordValues, parameters=params, saveat=ts)
+    solution = FMI.fmiSimulate(fmu, (tStart, tStop); solver=Tsit5(), x0=x0, recordValues=recordValues, parameters=params, saveat=ts, showProgress=showProgress)
 
     # tcp_target_x = collect(v[1] for v in solution.values.saveval)
     # tcp_target_y = collect(v[2] for v in solution.values.saveval)
@@ -139,8 +139,7 @@ end
 function getParameter(data::RobotRR_Data, t::Real; kwargs...) 
     params = getParameter(data.set; kwargs...)
 
-    values = solution.values.saveval(t)
-
+    # values = solution.values.saveval(t)
     # params["rRPositionControl_Elasticity.rr1.rotational1.revolute1.phi"] = values[4]
     # params["rRPositionControl_Elasticity.rr1.rotational2.revolute1.phi"] = values[5]
     # params["rRPositionControl_Elasticity.rr1.rotational1.revolute1.w"] = values[6]

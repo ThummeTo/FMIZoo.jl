@@ -7,7 +7,7 @@ using EzXML
 using LinearAlgebra
 using Plots
 
-file = "train"
+file = "L"
 
 path = joinpath(@__DIR__, file * ".svg")
 doc = readxml(path)
@@ -33,7 +33,10 @@ function searchforPoints!(paths, root)
 
                 commands = split(d, " ")
 
+                @info "Found $(length(commands)) commands!"
+
                 i = 1
+                lastCommand = ""
                 while i <= length(commands)
                     if commands[i] == "L"
                         i += 1 
@@ -55,7 +58,7 @@ function searchforPoints!(paths, root)
                         push!(points, W * [c1; c2] + b)
                         @info "... found M($(c1), $(c2)) -> $(points[end])"
                     else
-                        @assert false "unknwon command $(commands[i])"
+                        @assert false "unknwon command `$(commands[i])`"
                     end
                     i += 1
                 end
@@ -112,7 +115,7 @@ fig
 l1 = 0.2 
 l2 = 0.1
 origin = (l1, 0.0)
-xlen = l1 * 2 * 0.45
+xlen = l1 * 2 
 min_x = Inf
 max_x = -Inf
 min_y = Inf 
@@ -131,6 +134,8 @@ for path in paths
         end
     end
 end
+
+xlen *= 0.35 # 0.45
 scale = xlen / (max_x-min_x) 
 shift = (-min_x-(max_x-min_x)/2.0, -min_y-(max_y-min_y)/2.0) .+ origin ./ scale
 for path in paths 
@@ -154,7 +159,7 @@ fig
 # save as txt (for Modelica-import)
 function exportModelicaTXT(file, paths; speed=0.05, startPoint=[l1+l2, 0.0] .* 0.99)
     num = sum(collect(length(path) for path in paths)) + length(paths)*2 + 1
-    f = open(joinpath(@__DIR__, file * ".txt"), "w")
+    f = open(joinpath(@__DIR__, "..", file * ".txt"), "w")
     write(f, "#1
 
 # Table
