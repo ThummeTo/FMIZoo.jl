@@ -7,6 +7,7 @@ model BouncingBall1D
   parameter Modelica.Units.SI.Radius mass_radius=0.1;
   parameter Modelica.Units.SI.Position mass_s_start=1.0;
   parameter Modelica.Units.SI.Mass mass_m=1.0;
+  parameter Modelica.Units.SI.Position mass_s_min=1e-12;
 
   parameter Real damping = 0.9;
 
@@ -21,6 +22,7 @@ equation
   mass_m * der(mass_v) = -9.81 * mass_m;
 
   when mass_s < mass_radius then
+    reinit(mass_s, mass_radius+mass_s_min);
     reinit(mass_v, -pre(mass_v)*damping);
   end when;
 
