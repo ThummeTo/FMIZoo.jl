@@ -39,7 +39,7 @@ end
 function RobotRR(dataset::Symbol;
                dt::Union{Real, Nothing}=0.01, friction::Bool=true, x0=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], showProgress=false)
 
-    @assert dataset ∈ (:test, :train, :validate, :thanks, :A, :B, :L) "RobotRR keyword `dataset` must be ∈ (:test, :train, :validate, :thanks, :A, :B, :L)."
+    @assert dataset ∈ (:test, :train, :validate, :thanks, :B) "RobotRR keyword `dataset` must be ∈ (:test, :train, :validate, :thanks, :B)."
 
     # parameter dict for FMU 
     params = getParameter(dataset; friction=friction)
