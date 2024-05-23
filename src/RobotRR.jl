@@ -6,7 +6,7 @@
 using MAT
 import Interpolations: linear_interpolation
 import Optim
-using .FMI.DifferentialEquations
+using DifferentialEquations
 
 # topology is adopted from MLDatasets.jl to achieve consistency
 struct RobotRR_Data{T}
@@ -33,7 +33,7 @@ struct RobotRR_Data{T}
    
     set::Symbol
     params::Dict{String, Any}
-    solution::FMI.FMU2Solution
+    solution::FMI.FMUSolution
 end
 
 function RobotRR(dataset::Symbol;
