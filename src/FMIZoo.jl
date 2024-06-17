@@ -21,25 +21,22 @@ end
 include(joinpath(@__DIR__, "mosGenerators.jl"))
 
 export list_models, get_model_filename, generate_mos_scripts, collect_fmus
+
 include(joinpath(@__DIR__, "util.jl"))
+include(joinpath(@__DIR__, "RobotRR.jl"))
 
+# extensions
+using Requires
+using PackageExtensionCompat
 function __init__()
-    @require FMIImport="9fcbc62e-52a0-44e9-a616-1359a0008194" begin 
-        
-        include(joinpath(@__DIR__, "addon.jl"))
-        import .FMIImport
-        FMIImport.loadFMU(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = _loadFMU(name, tool, version, fmiversion; kwargs...)
-    end
-
-    @require FMI="14a09403-18e3-468f-ad8a-74f8dda2d9ac" begin 
-        
-        import .FMI
-        #FMI.FMIImport.loadFMU(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = _loadFMU(name, tool, version, fmiversion; kwargs...)
-        
-        # RobotRR simulates FMUs for synthetic data, so FMI.jl is required
-        include(joinpath(@__DIR__, "RobotRR.jl"))
-    end
+    @require_extensions
 end
+
+# FMIBase.jl
+# [Note] nothing to declare
+
+# FMI.jl
+function RobotRR end 
 
 # data 
 include(joinpath(@__DIR__, "VLDM.jl"))
