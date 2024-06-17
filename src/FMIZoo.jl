@@ -32,9 +32,6 @@ function __init__()
     @require_extensions
 end
 
-# FMIBase.jl
-# [Note] nothing to declare
-
 # FMI.jl
 function RobotRR end 
 

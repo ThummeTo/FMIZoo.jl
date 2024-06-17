@@ -16,10 +16,11 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [weakdeps]
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 FMI = "14a09403-18e3-468f-ad8a-74f8dda2d9ac"
 
 [extensions]
-FMIExt = ["FMI"]
+DifferentialEquationsFMIExt = ["DifferentialEquations", "FMI"]
 
 [compat]
 Downloads = "1"
