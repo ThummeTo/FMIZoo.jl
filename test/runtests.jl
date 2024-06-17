@@ -6,6 +6,9 @@
 using Test
 using FMIZoo
 
+# optional 
+using FMI, DifferentialEquations
+
 @testset "FMIZoo.jl" begin
     list_models()
     
@@ -54,4 +57,13 @@ using FMIZoo
             @test length(getfield(data, prop)) == len
         end
     end
+
+    # check RobotRR (only availabloe together with FMI)
+    data_train = FMIZoo.RobotRR(:train)
+    tSave = data_train.t 
+    tStart = tSave[1]
+    @test length(tSave) == 1861
+    x0 = FMIZoo.getState(data_train, tStart)
+    @test x0 == zeros(6)
+
 end

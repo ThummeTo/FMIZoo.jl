@@ -1,3 +1,8 @@
+#
+# Copyright (c) 2021 Frederic Bruder, Tobias Thummerer, Lars Mikelsons
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
+
 module mosGenerators
 
 import ..FMIZoo
