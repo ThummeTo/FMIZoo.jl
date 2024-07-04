@@ -7,7 +7,7 @@ using EzXML
 using LinearAlgebra
 using Plots
 
-file = "L"
+file = "heart"
 
 path = joinpath(@__DIR__, file * ".svg")
 doc = readxml(path)
