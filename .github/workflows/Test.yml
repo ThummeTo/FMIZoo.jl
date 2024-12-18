@@ -21,12 +21,12 @@ jobs:
 
       # Set up Julia
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@latest
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         env:
           cache-name: cache-artifacts
         with:
@@ -39,7 +39,7 @@ jobs:
 
       # Build FMIZoo.jl package
       - name: "Build package"
-        uses: julia-actions/julia-buildpkg@latest
+        uses: julia-actions/julia-buildpkg@v1
 
       # Run the tests
       - name: "Run tests"
@@ -51,6 +51,8 @@ jobs:
 
       # Run codecov
       - name: "Run CodeCov"
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          file: lcov.info
+          files: lcov.info
