@@ -21,42 +21,19 @@ end
 include(joinpath(@__DIR__, "mosGenerators.jl"))
 
 export list_models, get_model_filename, generate_mos_scripts, collect_fmus
+
 include(joinpath(@__DIR__, "util.jl"))
+include(joinpath(@__DIR__, "RobotRR.jl"))
 
-# function fmi2Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...)
-#     @warn "fmi2Load(...) needs `FMIImport` package. Please install `FMIImport` and do `using FMIImport` or `import FMIImport`."
-# end
-# export fmi2Load
-
-# function fmi3Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...)
-#     @warn "fmi3Load(...) needs `FMIImport` package. Please install `FMIImport` and do `using FMIImport` or `import FMIImport`."
-# end
-# export fmi3Load
-
-# function fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...)
-#     @warn "fmiLoad(...) needs `FMI` package. Please install `FMI` and do `using FMI` or `import FMI`."
-# end
-# export fmiLoad
-
+# extensions
+using Requires
+using PackageExtensionCompat
 function __init__()
-    @require FMIImport="9fcbc62e-52a0-44e9-a616-1359a0008194" begin 
-        include(joinpath(@__DIR__, "addon.jl"))
-
-        import .FMIImport
-        FMIImport.fmi2Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...) = fmi2Load(name, tool, version; kwargs...)
-        FMIImport.fmi3Load(name::AbstractString, tool::AbstractString, version::AbstractString; kwargs...) = fmi3Load(name, tool, version; kwargs...)
-    end
-
-    @require FMI="14a09403-18e3-468f-ad8a-74f8dda2d9ac" begin 
-        include(joinpath(@__DIR__, "addon.jl"))
-
-        import .FMI
-        FMI.fmiLoad(name::AbstractString, tool::AbstractString, version::AbstractString, fmiversion::AbstractString="2.0"; kwargs...) = fmiLoad(name, tool, version, fmiversion; kwargs...)
-
-        # RobotRR simulates FMUs for synthetic data, so FMI.jl is required
-        include(joinpath(@__DIR__, "RobotRR.jl"))
-    end
+    @require_extensions
 end
+
+# FMI.jl
+function RobotRR end 
 
 # data 
 include(joinpath(@__DIR__, "VLDM.jl"))
