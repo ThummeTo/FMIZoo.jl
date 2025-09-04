@@ -35,7 +35,7 @@ function FMIZoo.RobotRR(dataset::Symbol;
 
     ts = collect(tStart:dt:tStop)
 
-    fmu = FMI.fmiLoad(joinpath(@__DIR__, "..", "models", "bin", "Dymola", "2023x", "2.0", "RobotRR.fmu"); type=:ME) # todo: new call semantics!
+    fmu = FMI.loadFMU(joinpath(@__DIR__, "..", "models", "bin", "Dymola", "2023x", "2.0", "RobotRR.fmu"); type=:ME) # todo: new call semantics!
 
     # recordValues = ["combiTimeTable.y[1]", "combiTimeTable.y[2]", "combiTimeTable.y[3]", 
     #         "rRPositionControl_Elasticity.rr1.rotational1.revolute1.phi",
@@ -47,7 +47,7 @@ function FMIZoo.RobotRR(dataset::Symbol;
     "rRPositionControl_Elasticity.tCP.p_x", "rRPositionControl_Elasticity.tCP.p_y", 
     "rRPositionControl_Elasticity.tCP.v_x", "rRPositionControl_Elasticity.tCP.v_y"]
 
-    solution = FMI.fmiSimulate(fmu, (tStart, tStop); solver=Tsit5(), x0=x0, recordValues=recordValues, parameters=params, saveat=ts, showProgress=showProgress) # todo: new call semantics!
+    solution = FMI.simulate(fmu, (tStart, tStop); solver=Tsit5(), x0=x0, recordValues=recordValues, parameters=params, saveat=ts, showProgress=showProgress) # todo: new call semantics!
 
     # tcp_target_x = collect(v[1] for v in solution.values.saveval)
     # tcp_target_y = collect(v[2] for v in solution.values.saveval)
