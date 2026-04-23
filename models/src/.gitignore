@@ -1,6 +1,9 @@
-*.*
-*/
-!*.mo
+ds*.txt
+ds*.c
+ds*.exe
 *_fmu.mo
+*.mat
+dymosim.exe
+buildlog.txt
 request
 status
