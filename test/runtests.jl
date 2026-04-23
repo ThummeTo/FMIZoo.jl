@@ -41,7 +41,7 @@ using FMI, DifferentialEquations
     # check available data in VLDM
     cycles = (:train, :validate, :test, "WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road")
     lens = (5838, 14446, 11301, 5838, 14446, 11301)
-    for i in 1:length(cycles)
+    for i = 1:length(cycles)
         cycle = cycles[i]
         len = lens[i]
 
@@ -49,26 +49,38 @@ using FMI, DifferentialEquations
         data = FMIZoo.VLDM(cycle; experiments=1)
         data = FMIZoo.VLDM(cycle; experiments=2)
 
-        for prop ∈ (:position_t, :position_val, :position_dev,
-            :speed_t, :speed_val, :speed_dev,
-            :consumption_t, :consumption_val, :consumption_dev,
-            :cumconsumption_t, :cumconsumption_val, :cumconsumption_dev)
+        for prop ∈ (
+            :position_t,
+            :position_val,
+            :position_dev,
+            :speed_t,
+            :speed_val,
+            :speed_dev,
+            :consumption_t,
+            :consumption_val,
+            :consumption_dev,
+            :cumconsumption_t,
+            :cumconsumption_val,
+            :cumconsumption_dev,
+        )
 
             @test length(getfield(data, prop)) == len
         end
     end
 
     # check RobotRR (only availabloe together with FMI)
-    data_train = FMIZoo.RobotRR(:train)
+    x0_gt = [0.0, 0.0, 1e-3, 0.0, 1e-3, 0.0]
+    data_train = FMIZoo.RobotRR(:train; x0=x0_gt)
     tSave = data_train.t
     tStart = tSave[1]
     @test length(tSave) == 1861
     x0 = FMIZoo.getState(data_train, tStart)
-    @test x0 == zeros(6)
+    @test x0 == x0_gt
 
     # LSSA test
     for i in (1, 10, 100, 1000)
-        path = get_model_filename("NBouncingBalls_$(i)", "LSSAReferenceFMUs", "0.1.0", "3.0")
+        path =
+            get_model_filename("NBouncingBalls_$(i)", "LSSAReferenceFMUs", "0.1.0", "3.0")
         @test isfile(path)
     end
 

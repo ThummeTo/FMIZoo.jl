@@ -32,14 +32,14 @@ struct RobotRR_Data{T}
 
     set::Symbol
     params::Dict{String,Any}
-    solution # ::FMI.FMUSolution
+    solution::Any # ::FMI.FMUSolution
 end
 
 function getState(data::RobotRR_Data, t::Real)
     return data.solution.states(t)
 end
 
-function getParameter(dataset::Symbol; friction::Bool=true)
+function getParameter(dataset::Symbol; friction::Bool = true)
 
     params = Dict{String,Any}()
     params["fileName"] = joinpath(@__DIR__, "..", "data", "RobotRR", "$(dataset).txt")

@@ -8,13 +8,18 @@ module DifferentialEquationsFMIExt
 using FMIZoo, FMI
 using DifferentialEquations, FMI
 
-function FMIZoo.RobotRR(dataset::Symbol;
-    dt::Union{Real,Nothing}=0.01, friction::Bool=true, x0=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], showProgress=false)
+function FMIZoo.RobotRR(
+    dataset::Symbol;
+    dt::Union{Real,Nothing} = 0.01,
+    friction::Bool = true,
+    x0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    showProgress = false,
+)
 
     @assert dataset ∈ (:test, :train, :validate, :thanks, :B) "RobotRR keyword `dataset` must be ∈ (:test, :train, :validate, :thanks, :B)."
 
     # parameter dict for FMU 
-    params = FMIZoo.getParameter(dataset; friction=friction)
+    params = FMIZoo.getParameter(dataset; friction = friction)
 
     f = open(params["fileName"], "r")
     tStart = Inf
@@ -35,7 +40,10 @@ function FMIZoo.RobotRR(dataset::Symbol;
 
     ts = collect(tStart:dt:tStop)
 
-    fmu = FMI.loadFMU(joinpath(@__DIR__, "..", "models", "bin", "Dymola", "2023x", "2.0", "RobotRR.fmu"); type=:ME) # todo: new call semantics!
+    fmu = FMI.loadFMU(
+        joinpath(@__DIR__, "..", "models", "bin", "Dymola", "2023x", "2.0", "RobotRR.fmu");
+        type = :ME,
+    ) # todo: new call semantics!
 
     # recordValues = ["combiTimeTable.y[1]", "combiTimeTable.y[2]", "combiTimeTable.y[3]", 
     #         "rRPositionControl_Elasticity.rr1.rotational1.revolute1.phi",
@@ -43,11 +51,26 @@ function FMIZoo.RobotRR(dataset::Symbol;
     #         "rRPositionControl_Elasticity.rr1.rotational1.revolute1.w",
     #         "rRPositionControl_Elasticity.rr1.rotational2.revolute1.w"]
 
-    recordValues = ["combiTimeTable.y[1]", "combiTimeTable.y[2]", "combiTimeTable.y[3]",
-        "rRPositionControl_Elasticity.tCP.p_x", "rRPositionControl_Elasticity.tCP.p_y",
-        "rRPositionControl_Elasticity.tCP.v_x", "rRPositionControl_Elasticity.tCP.v_y"]
+    recordValues = [
+        "combiTimeTable.y[1]",
+        "combiTimeTable.y[2]",
+        "combiTimeTable.y[3]",
+        "rRPositionControl_Elasticity.tCP.p_x",
+        "rRPositionControl_Elasticity.tCP.p_y",
+        "rRPositionControl_Elasticity.tCP.v_x",
+        "rRPositionControl_Elasticity.tCP.v_y",
+    ]
 
-    solution = FMI.simulate(fmu, (tStart, tStop); solver=Tsit5(), x0=x0, recordValues=recordValues, parameters=params, saveat=ts, showProgress=showProgress) # todo: new call semantics!
+    solution = FMI.simulate(
+        fmu,
+        (tStart, tStop);
+        solver = Tsit5(),
+        x0 = x0,
+        recordValues = recordValues,
+        parameters = params,
+        saveat = ts,
+        showProgress = showProgress,
+    ) # todo: new call semantics!
 
     # tcp_target_x = collect(v[1] for v in solution.values.saveval)
     # tcp_target_y = collect(v[2] for v in solution.values.saveval)
@@ -79,7 +102,25 @@ function FMIZoo.RobotRR(dataset::Symbol;
     a1 = collect(x[5] for x in solution.states.u)
     da1 = collect(x[6] for x in solution.states.u)
 
-    data = FMIZoo.RobotRR_Data{Float64}(ts, tcp_px, tcp_py, tcp_vx, tcp_vy, tcp_target_x, tcp_target_y, tcp_norm_f, i1, i2, a1, a2, da1, da2, dataset, params, solution)
+    data = FMIZoo.RobotRR_Data{Float64}(
+        ts,
+        tcp_px,
+        tcp_py,
+        tcp_vx,
+        tcp_vy,
+        tcp_target_x,
+        tcp_target_y,
+        tcp_norm_f,
+        i1,
+        i2,
+        a1,
+        a2,
+        da1,
+        da2,
+        dataset,
+        params,
+        solution,
+    )
 
     return data
 end

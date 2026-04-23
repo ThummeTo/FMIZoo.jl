@@ -15,7 +15,7 @@ p_mos_scripts = joinpath(dir |> dirname, "mos_scripts")
 absModelPaths = glob("*.mo", p_model_src)
 
 modelNames = map(absModelPaths) do x
-    return splitpath(x)[end][1:end-3]
+    return splitpath(x)[end][1:(end-3)]
 end
 
 include(joinpath(@__DIR__, "mosGenerators.jl"))

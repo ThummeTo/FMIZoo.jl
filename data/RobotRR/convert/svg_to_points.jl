@@ -78,13 +78,13 @@ function parseTransform(node)
         transform = node["transform"]
 
         if startswith(transform, "scale(") && endswith(transform, ")")
-            parts = split(transform[7:end-1], ",")
+            parts = split(transform[7:(end-1)], ",")
             @assert length(parts) == 2 "found `scale` with invalid arguments `$(transform)`"
             W[1, 1] = parse(Float64, parts[1])
             W[2, 2] = parse(Float64, parts[2])
 
         elseif startswith(transform, "matrix(") && endswith(transform, ")")
-            parts = split(transform[8:end-1], " ")
+            parts = split(transform[8:(end-1)], " ")
             @assert length(parts) == 6 "found `matrix` with invalid arguments `$(transform)`"
             W[1, 1] = parse(Float64, parts[1])
             W[2, 1] = parse(Float64, parts[2])
@@ -139,7 +139,7 @@ xlen *= 0.35 # 0.45
 scale = xlen / (max_x - min_x)
 shift = (-min_x - (max_x - min_x) / 2.0, -min_y - (max_y - min_y) / 2.0) .+ origin ./ scale
 for path in paths
-    for i in 1:length(path)
+    for i = 1:length(path)
         path[i] = (((path[i] .+ shift) .* scale)...,)
 
         # check if trajectory is reachable
@@ -157,7 +157,7 @@ end
 fig
 
 # save as txt (for Modelica-import)
-function exportModelicaTXT(file, paths; speed=0.05, startPoint=[l1 + l2, 0.0] .* 0.99)
+function exportModelicaTXT(file, paths; speed = 0.05, startPoint = [l1 + l2, 0.0] .* 0.99)
     num = sum(collect(length(path) for path in paths)) + length(paths) * 2 + 1
     f = open(joinpath(@__DIR__, "..", file * ".txt"), "w")
     write(
@@ -170,7 +170,7 @@ function exportModelicaTXT(file, paths; speed=0.05, startPoint=[l1 + l2, 0.0] .*
 
 double Paths($(num),4)
 
-"
+",
     )
     t = 0.0
     lastPoint = startPoint
@@ -179,11 +179,11 @@ double Paths($(num),4)
         f,
         "$(t) $(lastPoint[1]) $(lastPoint[2]) $(force)
 
-"
+",
     )
     for path in paths
         force = 0.0
-        for i in 1:length(path)
+        for i = 1:length(path)
             point = path[i]
             t += sqrt((lastPoint[1] - point[1])^2 + (lastPoint[2] - point[2])^2) / speed
 
@@ -193,7 +193,7 @@ double Paths($(num),4)
                     f,
                     "$(t) $(point[1]) $(point[2]) $(force)
 
-"
+",
                 )
                 force = 1.0
             end
@@ -204,7 +204,7 @@ double Paths($(num),4)
                     f,
                     "$(t) $(point[1]) $(point[2]) $(force)
 
-"
+",
                 )
                 force = 0.0
             end
@@ -213,7 +213,7 @@ double Paths($(num),4)
                 f,
                 "$(t) $(point[1]) $(point[2]) $(force)
 
-"
+",
             )
             lastPoint = point
         end
