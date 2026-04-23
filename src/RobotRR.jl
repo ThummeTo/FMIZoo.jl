@@ -21,7 +21,7 @@ struct RobotRR_Data{T}
     tcp_target_x::Array{T}
     tcp_target_y::Array{T}
 
-    tcp_norm_f::Array{T} 
+    tcp_norm_f::Array{T}
 
     i1::Array{T}
     i2::Array{T}
@@ -29,25 +29,25 @@ struct RobotRR_Data{T}
     a2::Array{T}
     da1::Array{T}
     da2::Array{T}
-   
+
     set::Symbol
-    params::Dict{String, Any}
+    params::Dict{String,Any}
     solution # ::FMI.FMUSolution
 end
 
-function getState(data::RobotRR_Data, t::Real) 
+function getState(data::RobotRR_Data, t::Real)
     return data.solution.states(t)
-end 
+end
 
-function getParameter(dataset::Symbol; friction::Bool=true) 
+function getParameter(dataset::Symbol; friction::Bool=true)
 
-    params = Dict{String, Any}()
+    params = Dict{String,Any}()
     params["fileName"] = joinpath(@__DIR__, "..", "data", "RobotRR", "$(dataset).txt")
 
     if friction
         params["rRPositionControl_Elasticity.tCP.slipStick.vAdhesion"] = 0.1
-        params["rRPositionControl_Elasticity.tCP.slipStick.vSlide"] = 0.3 
-        params["rRPositionControl_Elasticity.tCP.slipStick.mu_A"] = 0.3 
+        params["rRPositionControl_Elasticity.tCP.slipStick.vSlide"] = 0.3
+        params["rRPositionControl_Elasticity.tCP.slipStick.mu_A"] = 0.3
         params["rRPositionControl_Elasticity.tCP.slipStick.mu_S"] = 0.15
     end
 
@@ -57,9 +57,9 @@ function getParameter(dataset::Symbol; friction::Bool=true)
     # params["rRPositionControl_Elasticity.rr1.rotational2.revolute1.w"] = 0.0
 
     return params
-end 
+end
 
-function getParameter(data::RobotRR_Data, t::Real; kwargs...) 
+function getParameter(data::RobotRR_Data, t::Real; kwargs...)
     params = getParameter(data.set; kwargs...)
 
     # values = solution.values.saveval(t)

@@ -7,13 +7,13 @@ using MAT
 import Interpolations: linear_interpolation
 import Optim
 
-WLTCC2_INDICES = [round(Int, 986.69*100), round(Int, 574.80*100)]
-WLTCC2_SHIFTS = [round(Int, 0.98*100), round(Int, 5.35*100)]
+WLTCC2_INDICES = [round(Int, 986.69 * 100), round(Int, 574.80 * 100)]
+WLTCC2_SHIFTS = [round(Int, 0.98 * 100), round(Int, 5.35 * 100)]
 
 function objective(p, d1, d2)
     @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
     n = length(d1)
-    return sum(collect((d1[i]-d2[i]*p[1])^2 for i in 1:n)) / n
+    return sum(collect((d1[i] - d2[i] * p[1])^2 for i in 1:n)) / n
 end
 
 function cumul_integrate(ts, vals)
@@ -24,7 +24,7 @@ function cumul_integrate(ts, vals)
         _min = min(vals[i], vals[i+1])
         _max = max(vals[i], vals[i+1])
 
-        sum = integ[i] + dt * _min + 1/2 * dt * (_max-_min)
+        sum = integ[i] + dt * _min + 1 / 2 * dt * (_max - _min)
 
         push!(integ, sum)
     end
@@ -33,15 +33,15 @@ function cumul_integrate(ts, vals)
 end
 
 function movavg!(data::AbstractArray{<:Real}, dist::Integer)
-    @assert dist%2 == 0 "Argument dist must be multiple of 2."
+    @assert dist % 2 == 0 "Argument dist must be multiple of 2."
 
     dataTmp = copy(data)
     num = length(data)
 
     for i in 1:num
-        dLeft = max(1, Int(i-dist/2))
-        dRight = min(num, Int(i+dist/2))
-        data[i] = sum(dataTmp[dLeft:dRight]) / (dRight-dLeft)
+        dLeft = max(1, Int(i - dist / 2))
+        dRight = min(num, Int(i + dist / 2))
+        data[i] = sum(dataTmp[dLeft:dRight]) / (dRight - dLeft)
     end
 
     return nothing
@@ -50,7 +50,7 @@ end
 function movavg(data::AbstractArray{<:Real}, dist::Integer)
     buffer = copy(data)
     movavg!(buffer, dist)
-    return buffer 
+    return buffer
 end
 
 # topology is adopted from MLDatasets.jl to achieve consistency
@@ -76,13 +76,13 @@ struct VLDM_Data{T}
     cumconsumption_dev::Array{T}
     cumconsumption_val_inter
 
-    params::Dict{String, Any}
+    params::Dict{String,Any}
 end
 
 function correctCumConsumption!(t, con, cumcon)
-   
+
     cumcon_integ = cumul_integrate(t, con)
-    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250) 
+    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations=250)
     scale = opt.minimizer[1]
     # @info "$(scale)"
     #scales = [1.0007126267053534, 1.0016768135377787]
@@ -91,7 +91,7 @@ function correctCumConsumption!(t, con, cumcon)
 
     #@info "Cumulative consumption corrected by factor $(scale) (based on current consumption optimization)."
 
-    cumcon[:] = cumcon_integ[:] .* scale 
+    cumcon[:] = cumcon_integ[:] .* scale
     return nothing
 end
 
@@ -102,36 +102,36 @@ function shiftarray!(array, inds, shifts)
 
         # doesn't affect this array
         if ind > length(array)
-            continue 
+            continue
         end
 
         left = array[ind]
         right = array[ind+1]
         for i in 1:shift
             pop!(array)
-            insert!(array, ind+i, left + (right-left)/shift*i) # linear interpolation
+            insert!(array, ind + i, left + (right - left) / shift * i) # linear interpolation
         end
-        
+
     end
 end
 
 function correctTimeShifts!(array, inds, shifts)
     shiftarray!(array, inds, shifts)
-    
+
     return nothing
 end
 
-function VLDM(cycle::Union{String, Symbol};
-               experiments::Union{Int, UnitRange{<:Int}}=1:2, 
-               filterSpeed::Bool=true, 
-               dt::Union{Real, Nothing}=0.1,  
-               pre_pocess::Bool=true)
+function VLDM(cycle::Union{String,Symbol};
+    experiments::Union{Int,UnitRange{<:Int}}=1:2,
+    filterSpeed::Bool=true,
+    dt::Union{Real,Nothing}=0.1,
+    pre_pocess::Bool=true)
 
     @assert !isa(cycle, Symbol) || cycle ∈ (:cycle, :test, :train, :validate) "VLDM keyword `cycle` must be `:train`, `:test`, `:validate` or a String."
     @assert !isa(cycle, String) || cycle ∈ ("WLTCC2_Low", "WLTCC2_Complete", "Artemis_Road") "VLDM keyword `cycle` must be `WLTCC2_Low`, `WLTCC2_Complete`, `Artemis_Road`."
     @assert experiments ∈ (1, 2, 1:2) "VLDM keyword `experiments` must be `1`, `2` or `1:2`."
 
-    if cycle == :train 
+    if cycle == :train
         cycle = "WLTCC2_Low"
     elseif cycle == :validate
         cycle = "WLTCC2_Complete"
@@ -159,9 +159,9 @@ function VLDM(cycle::Union{String, Symbol};
     numExperiments = length(experiments)
 
     # parameter dict for FMU 
-    params = Dict{String, Any}()
+    params = Dict{String,Any}()
     params["peFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "PowerElectronics", "PowerElectronicsData.mat")
-    params["edFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "ElectricDrive", "ElectricDriveData.mat") 
+    params["edFileName"] = joinpath(@__DIR__, "..", "data", "VLDM", "ElectricDrive", "ElectricDriveData.mat")
 
     tlen = nothing
 
@@ -195,7 +195,7 @@ function VLDM(cycle::Union{String, Symbol};
     tlen = min(collect(length(experiment["$(cycle)$(e)"][speedField][:, 1]) for e in experiments)...)
     speed_t = experiment["$(cycle)$(experiments[1])"][speedField][1:tlen, 1]
     speed_vals = collect(copy(experiment["$(cycle)$(e)"][speedField][1:tlen, 2]) for e in experiments)
-    
+
     consumption_t = experiment["$(cycle)$(experiments[1])"]["Voltage"][1:tlen, 1]
     consumption_vals = collect(copy(experiment["$(cycle)$(e)"]["Voltage"][1:tlen, 2] .* experiment["$(cycle)$(e)"]["Current"][1:tlen, 2]) for e in experiments)
 
@@ -256,24 +256,24 @@ function VLDM(cycle::Union{String, Symbol};
 
     # interpolate
     if !isnothing(dt)
-        
+
         interp_dev = linear_interpolation(speed_t, speed_dev)
-        speed_t = speed_t[1]:dt:speed_t[end] 
+        speed_t = speed_t[1]:dt:speed_t[end]
         speed_val = speed_val_inter.(speed_t)
         speed_dev = interp_dev.(speed_t)
 
         interp_dev = linear_interpolation(position_t, position_dev)
-        position_t = position_t[1]:dt:position_t[end] 
+        position_t = position_t[1]:dt:position_t[end]
         position_val = position_val_inter.(position_t)
         position_dev = interp_dev.(position_t)
 
         interp_dev = linear_interpolation(consumption_t, consumption_dev)
-        consumption_t = consumption_t[1]:dt:consumption_t[end] 
+        consumption_t = consumption_t[1]:dt:consumption_t[end]
         consumption_val = consumption_val_inter.(consumption_t)
         consumption_dev = interp_dev.(consumption_t)
 
         interp_dev = linear_interpolation(cumconsumption_t, cumconsumption_dev)
-        cumconsumption_t = cumconsumption_t[1]:dt:cumconsumption_t[end] 
+        cumconsumption_t = cumconsumption_t[1]:dt:cumconsumption_t[end]
         cumconsumption_val = cumconsumption_val_inter.(cumconsumption_t)
         cumconsumption_dev = interp_dev.(cumconsumption_t)
     end
@@ -293,8 +293,8 @@ function VLDM(cycle::Union{String, Symbol};
     # closing file 
     close(file)
 
-    data =  VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
-        speed_t, speed_val, speed_dev, speed_val_inter, 
+    data = VLDM_Data{Float64}(position_t, position_val, position_dev, position_val_inter,
+        speed_t, speed_val, speed_dev, speed_val_inter,
         consumption_t, consumption_val, consumption_dev, consumption_val_inter,
         cumconsumption_t, cumconsumption_val, cumconsumption_dev, cumconsumption_val_inter,
         params)
@@ -303,8 +303,8 @@ function VLDM(cycle::Union{String, Symbol};
 end
 
 function getStateVector(data::VLDM_Data, time::Real)
-    
-    state = zeros(6) 
+
+    state = zeros(6)
 
     if time > data.position_t[end]
         time = data.position_t[end]
@@ -318,6 +318,6 @@ function getStateVector(data::VLDM_Data, time::Real)
     state[4] = data.position_val_inter(time)
     state[5] = data.speed_val_inter(time)
     state[6] = data.cumconsumption_val_inter(time)
-    
+
     return state
-end 
+end

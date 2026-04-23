@@ -11,11 +11,11 @@ using FMI, DifferentialEquations
 
 @testset "FMIZoo.jl" begin
     list_models()
-    
+
     # get_model_filename#1
-    path = get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x") 
-    @test length(path) > 0 
-    split = splitpath(path) 
+    path = get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
+    @test length(path) > 0
+    split = splitpath(path)
 
     @test split[end] == "SpringDamperPendulum1D.fmu"
     @test split[end-1] == "2.0"
@@ -26,8 +26,8 @@ using FMI, DifferentialEquations
     @test split[end-6] == "FMIZoo.jl"
 
     path = get_model_filename("BouncingBall", "ModelicaReferenceFMUs", "0.0.14", "3.0")
-    @test length(path) > 0 
-    split = splitpath(path) 
+    @test length(path) > 0
+    split = splitpath(path)
 
     @test split[end] == "BouncingBall.fmu"
     @test split[end-1] == "3.0"
@@ -49,21 +49,27 @@ using FMI, DifferentialEquations
         data = FMIZoo.VLDM(cycle; experiments=1)
         data = FMIZoo.VLDM(cycle; experiments=2)
 
-        for prop ∈ (:position_t, :position_val, :position_dev, 
-            :speed_t, :speed_val, :speed_dev, 
-            :consumption_t, :consumption_val, :consumption_dev, 
+        for prop ∈ (:position_t, :position_val, :position_dev,
+            :speed_t, :speed_val, :speed_dev,
+            :consumption_t, :consumption_val, :consumption_dev,
             :cumconsumption_t, :cumconsumption_val, :cumconsumption_dev)
-    
+
             @test length(getfield(data, prop)) == len
         end
     end
 
     # check RobotRR (only availabloe together with FMI)
     data_train = FMIZoo.RobotRR(:train)
-    tSave = data_train.t 
+    tSave = data_train.t
     tStart = tSave[1]
     @test length(tSave) == 1861
     x0 = FMIZoo.getState(data_train, tStart)
     @test x0 == zeros(6)
+
+    # LSSA test
+    for i in (1, 10, 100, 1000)
+        path = get_model_filename("NBouncingBalls_$(i)", "LSSAReferenceFMUs", "0.1.0", "3.0")
+        @test isfile(path)
+    end
 
 end

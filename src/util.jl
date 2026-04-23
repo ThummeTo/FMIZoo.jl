@@ -81,7 +81,7 @@ function get_model_filename(modelID::Integer, tool::AbstractString, version::Abs
     if modelID > length(modelNames)
         error("There are only $(length(modelNames)) models to choose from. Pass modelID between 1 and $(length(modelNames)). Do `list_models()` to list your options.")
     end
-    
+
     return get_model_filename(modelNames[modelID], tool, version)
 end
 
@@ -97,12 +97,12 @@ function download_reference_FMU(modelName::AbstractString, version::AbstractStri
 
     if !haskey(ENV, "ModelicaReferenceFMUs" * version)
         @info "No reference FMUs found for version $(version), downloading..."
-        
+
         zipPath = Downloads.download("https://github.com/modelica/Reference-FMUs/releases/download/v$(version)/Reference-FMUs-$(version).zip")
-        ENV["ModelicaReferenceFMUs" * version] = zipPath
+        ENV["ModelicaReferenceFMUs"*version] = zipPath
     else
-        zipPath = ENV["ModelicaReferenceFMUs" * version]
-    end 
+        zipPath = ENV["ModelicaReferenceFMUs"*version]
+    end
 
     dir = dirname(zipPath)
     path = joinpath(dir, "ModelicaReferenceFMUs", "$(version)", "$(fmiversion)")
@@ -120,7 +120,7 @@ function download_reference_FMU(modelName::AbstractString, version::AbstractStri
                     @info "No path for FMU found, creating..."
                     mkpath(path)
                 end
-                
+
                 numBytes = write(pathToFmu, read(f))
                 if numBytes == 0
                     print("Not able to read!")
@@ -153,14 +153,14 @@ end
     collect_fmus([dst])
 Extracts all FMUs found in directory $(p_model_src) into directory `dst` if specified. Otherwise, the FMUs are moved into a temporary directory.
 """
-function collect_fmus(p_dst::Union{AbstractString, Nothing}=nothing)
+function collect_fmus(p_dst::Union{AbstractString,Nothing}=nothing)
 
     if isnothing(p_dst)
         _p_dst = mktempdir(cleanup=false)
     else
         _p_dst = p_dst
     end
-    
+
     fmuPaths = glob("*.fmu", FMIZoo.p_model_src)
 
     @assert length(fmuPaths) > 0 "Could not find any FMUs in $(p_model_src). Did you run `FMIZoo.generate_mos_scripts` and have a fitting script executed by your Modelica tool?"

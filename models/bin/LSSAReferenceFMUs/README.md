@@ -28,4 +28,4 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 Modifications:
-Modified to lssa compatible version of BouncingBall. These modifications are provided under the MIT License (see FMIZoo.jl root).
+Modified to LSSA compatible version of BouncingBall. These modifications are provided under the MIT License (see FMIZoo.jl root).
