@@ -36,6 +36,3 @@ end
 generators = Dict("Dymola2022x" => Dymola2022x)
 
 end # module
-
-
-

@@ -35,7 +35,7 @@ using FMI, DifferentialEquations
     @test split[end-3] == "ModelicaReferenceFMUs"
 
     # generate_mos_scripts
-    generate_mos_scripts(verbose=false)
+    generate_mos_scripts(verbose = false)
     @test isfile(joinpath(FMIZoo.p_mos_scripts, "Dymola2022x.mos"))
 
     # check available data in VLDM
@@ -45,9 +45,9 @@ using FMI, DifferentialEquations
         cycle = cycles[i]
         len = lens[i]
 
-        data = FMIZoo.VLDM(cycle; experiments=1:2)
-        data = FMIZoo.VLDM(cycle; experiments=1)
-        data = FMIZoo.VLDM(cycle; experiments=2)
+        data = FMIZoo.VLDM(cycle; experiments = 1:2)
+        data = FMIZoo.VLDM(cycle; experiments = 1)
+        data = FMIZoo.VLDM(cycle; experiments = 2)
 
         for prop ∈ (
             :position_t,
@@ -70,7 +70,7 @@ using FMI, DifferentialEquations
 
     # check RobotRR (only availabloe together with FMI)
     x0_gt = [0.0, 0.0, 1e-3, 0.0, 1e-3, 0.0]
-    data_train = FMIZoo.RobotRR(:train; x0=x0_gt)
+    data_train = FMIZoo.RobotRR(:train; x0 = x0_gt)
     tSave = data_train.t
     tStart = tSave[1]
     @test length(tSave) == 1861
