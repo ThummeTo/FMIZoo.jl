@@ -33,11 +33,6 @@ function Dymola2022x()
     return mos_file_str
 end
 
-generators = Dict(
-    "Dymola2022x" => Dymola2022x
-)
+generators = Dict("Dymola2022x" => Dymola2022x)
 
 end # module
-
-
-
