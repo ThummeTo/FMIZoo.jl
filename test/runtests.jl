@@ -7,7 +7,7 @@ using Test
 using FMIZoo
 
 # optional 
-using FMI, DifferentialEquations
+using FMIImport, OrdinaryDiffEqTsit5
 
 @testset "FMIZoo.jl" begin
     list_models()
@@ -68,7 +68,7 @@ using FMI, DifferentialEquations
         end
     end
 
-    # check RobotRR (only availabloe together with FMI)
+    # check RobotRR (only available together with FMIImport and OrdinaryDiffEqTsit5)
     x0_gt = [0.0, 0.0, 1e-3, 0.0, 1e-3, 0.0]
     data_train = FMIZoo.RobotRR(:train; x0 = x0_gt)
     tSave = data_train.t

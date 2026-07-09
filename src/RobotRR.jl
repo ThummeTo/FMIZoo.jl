@@ -32,7 +32,7 @@ struct RobotRR_Data{T}
 
     set::Symbol
     params::Dict{String,Any}
-    solution::Any # ::FMI.FMUSolution
+    solution::Any # ::FMIImport.FMUSolution
 end
 
 function getState(data::RobotRR_Data, t::Real)

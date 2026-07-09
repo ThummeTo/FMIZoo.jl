@@ -32,7 +32,7 @@ function __init__()
     @require_extensions
 end
 
-# FMI.jl
+# FMIImport.jl extension hook
 function RobotRR end
 
 # data 
