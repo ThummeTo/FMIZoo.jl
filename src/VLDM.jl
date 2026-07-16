@@ -5,16 +5,22 @@
 
 using MAT
 import Interpolations: linear_interpolation
-import Optim
+# import Optim
 
 WLTCC2_INDICES = [round(Int, 986.69 * 100), round(Int, 574.80 * 100)]
 WLTCC2_SHIFTS = [round(Int, 0.98 * 100), round(Int, 5.35 * 100)]
 
-function objective(p, d1, d2)
-    @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
-    n = length(d1)
-    return sum(collect((d1[i] - d2[i] * p[1])^2 for i = 1:n)) / n
-end
+const VLDM_CUMCONSUMPTION_SCALES = Dict(
+    "WLTCC2Low_100_0" => (1.0008025701274175, 1.0036210960766763),
+    "WLTCC2_Complete_0" => (1.0007126267053534, 1.0016768135377787),
+    "Artemis_Road_100_0" => (1.0018987642339199, 1.0014834619913024),
+)
+
+# function objective(p, d1, d2)
+#     @assert length(d1) == length(d2) "`d1` and `d2` need to be the same length!"
+#     n = length(d1)
+#     return sum(collect((d1[i] - d2[i] * p[1])^2 for i = 1:n)) / n
+# end
 
 function cumul_integrate(ts, vals)
     integ = [0.0]
@@ -79,11 +85,11 @@ struct VLDM_Data{T}
     params::Dict{String,Any}
 end
 
-function correctCumConsumption!(t, con, cumcon)
+function correctCumConsumption!(t, con, cumcon, scale)
 
     cumcon_integ = cumul_integrate(t, con)
-    opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations = 250)
-    scale = opt.minimizer[1]
+    # opt = Optim.optimize(p -> objective(p, cumcon, cumcon_integ), [1.0]; iterations = 250)
+    # scale = opt.minimizer[1]
     # @info "$(scale)"
     #scales = [1.0007126267053534, 1.0016768135377787]
     #scale = scales[e]
@@ -256,6 +262,7 @@ function VLDM(
                 consumption_t,
                 consumption_vals[i],
                 cumconsumption_vals[i],
+                VLDM_CUMCONSUMPTION_SCALES[cycle][experiments[i]],
             )
         end
     end
