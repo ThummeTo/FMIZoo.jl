@@ -3,10 +3,11 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-module DifferentialEquationsFMIExt
+module FMIImportOrdinaryDiffEqTsit5Ext
 
-using FMIZoo, FMI
-using DifferentialEquations, FMI
+using FMIZoo
+using FMIImport
+using OrdinaryDiffEqTsit5: Tsit5
 
 function FMIZoo.RobotRR(
     dataset::Symbol;
@@ -16,9 +17,9 @@ function FMIZoo.RobotRR(
     showProgress = false,
 )
 
-    @assert dataset ∈ (:test, :train, :validate, :thanks, :B) "RobotRR keyword `dataset` must be ∈ (:test, :train, :validate, :thanks, :B)."
+    @assert dataset in (:test, :train, :validate, :thanks, :B) "RobotRR keyword `dataset` must be in (:test, :train, :validate, :thanks, :B)."
 
-    # parameter dict for FMU 
+    # parameter dict for FMU
     params = FMIZoo.getParameter(dataset; friction = friction)
 
     f = open(params["fileName"], "r")
@@ -40,12 +41,12 @@ function FMIZoo.RobotRR(
 
     ts = collect(tStart:dt:tStop)
 
-    fmu = FMI.loadFMU(
+    fmu = FMIImport.loadFMU(
         joinpath(@__DIR__, "..", "models", "bin", "Dymola", "2023x", "2.0", "RobotRR.fmu");
         type = :ME,
     ) # todo: new call semantics!
 
-    # recordValues = ["combiTimeTable.y[1]", "combiTimeTable.y[2]", "combiTimeTable.y[3]", 
+    # recordValues = ["combiTimeTable.y[1]", "combiTimeTable.y[2]", "combiTimeTable.y[3]",
     #         "rRPositionControl_Elasticity.rr1.rotational1.revolute1.phi",
     #         "rRPositionControl_Elasticity.rr1.rotational2.revolute1.phi",
     #         "rRPositionControl_Elasticity.rr1.rotational1.revolute1.w",
@@ -61,7 +62,7 @@ function FMIZoo.RobotRR(
         "rRPositionControl_Elasticity.tCP.v_y",
     ]
 
-    solution = FMI.simulate(
+    solution = FMIImport.simulate(
         fmu,
         (tStart, tStop);
         solver = Tsit5(),
@@ -125,4 +126,4 @@ function FMIZoo.RobotRR(
     return data
 end
 
-end # DifferentialEquationsFMIExt
+end # FMIImportOrdinaryDiffEqTsit5Ext

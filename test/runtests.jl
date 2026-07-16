@@ -6,8 +6,22 @@
 using Test
 using FMIZoo
 
+@testset "RobotRR optional dependencies" begin
+    msg = try
+        FMIZoo.RobotRR(:train)
+        ""
+    catch err
+        @test err isa ArgumentError
+        sprint(showerror, err)
+    end
+
+    @test occursin("FMIImport", msg)
+    @test occursin("OrdinaryDiffEqTsit5", msg)
+    @test occursin("FMIImportOrdinaryDiffEqTsit5Ext", msg)
+end
+
 # optional 
-using FMI, DifferentialEquations
+using FMIImport, OrdinaryDiffEqTsit5
 
 @testset "FMIZoo.jl" begin
     list_models()
@@ -68,7 +82,7 @@ using FMI, DifferentialEquations
         end
     end
 
-    # check RobotRR (only availabloe together with FMI)
+    # check RobotRR (only available together with FMIImport and OrdinaryDiffEqTsit5)
     x0_gt = [0.0, 0.0, 1e-3, 0.0, 1e-3, 0.0]
     data_train = FMIZoo.RobotRR(:train; x0 = x0_gt)
     tSave = data_train.t
