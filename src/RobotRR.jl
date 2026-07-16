@@ -5,7 +5,7 @@
 
 using MAT
 import Interpolations: linear_interpolation
-import Optim
+# import Optim
 
 # topology is adopted from MLDatasets.jl to achieve consistency
 struct RobotRR_Data{T}
