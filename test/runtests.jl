@@ -6,6 +6,20 @@
 using Test
 using FMIZoo
 
+@testset "RobotRR optional dependencies" begin
+    msg = try
+        FMIZoo.RobotRR(:train)
+        ""
+    catch err
+        @test err isa ArgumentError
+        sprint(showerror, err)
+    end
+
+    @test occursin("FMIImport", msg)
+    @test occursin("OrdinaryDiffEqTsit5", msg)
+    @test occursin("FMIImportOrdinaryDiffEqTsit5Ext", msg)
+end
+
 # optional 
 using FMIImport, OrdinaryDiffEqTsit5
 

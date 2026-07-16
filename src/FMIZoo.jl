@@ -25,8 +25,18 @@ export list_models, get_model_filename, generate_mos_scripts, collect_fmus
 include(joinpath(@__DIR__, "util.jl"))
 include(joinpath(@__DIR__, "RobotRR.jl"))
 
-# FMIImport.jl extension hook
-function RobotRR end
+# FMIImportOrdinaryDiffEqTsit5Ext.jl overloads this method when its optional
+# dependencies are loaded.
+function RobotRR(args...; kwargs...)
+    throw(
+        ArgumentError(
+            "FMIZoo.RobotRR requires the optional packages FMIImport and " *
+            "OrdinaryDiffEqTsit5. Load them with `using FMIImport, " *
+            "OrdinaryDiffEqTsit5` before calling `FMIZoo.RobotRR`; this " *
+            "activates the FMIImportOrdinaryDiffEqTsit5Ext extension.",
+        ),
+    )
+end
 
 # data 
 include(joinpath(@__DIR__, "VLDM.jl"))
